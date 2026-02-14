@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PRICE WAR – Ultimate Strategy Simulation</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0d0d0d;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background: #1b1b1b;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+h1 { color: #f5c16c; }
+
+button {
+    padding: 10px 18px;
+    margin: 8px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.high { background: #4CAF50; color: white; }
+.low { background: #f44336; color: white; }
+.premium { background: #2196F3; color: white; }
+
+#stats {
+    margin-top: 15px;
+    padding: 12px;
+    background: #262626;
+    border-radius: 8px;
+}
+
+#situationBox {
+    background: #222;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 8px;
+}
+
+.hidden { display: none; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>PRICE WAR – Strategic Survival</h1>
+
+<div id="intro">
+<p>Survive 20 competitive rounds.<br>
+Then defeat the Global Giant in Final Boss Mode.</p>
+<button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game" class="hidden">
+
+<h2 id="roundTitle"></h2>
+
+<div id="situationBox">
+<strong>Market Situation:</strong>
+<p id="situationText"></p>
+</div>
+
+<div id="stats">
+Cash: ₹<span id="cash"></span> |
+Reputation: <span id="rep"></span>/100 |
+Market Share: <span id="share"></span>% |
+Investor Confidence: <span id="investor"></span>/100
+</div>
+
+<p>Choose Strategy:</p>
+<button class="high" onclick="play('high')">Keep Price High</button>
+<button class="low" onclick="play('low')">Cut Price</button>
+<button class="premium" onclick="play('premium')">Premium Campaign</button>
+
+<p id="result"></p>
+
+</div>
+
+</div>
+
+<script>
+
+let round = 1;
+let maxRounds = 20;
+let bossRounds = 5;
+let inBossMode = false;
+
+let cash = 2500000;
+let reputation = 70;
+let marketShare = 50;
+let investor = 75;
+
+let playerHistory = [];
+
+const situations = [
+"Festive demand surge.",
+"Economic slowdown reduces spending.",
+"Raw material costs increase sharply.",
+"Competitor launches aggressive discounts.",
+"Premium segment expanding.",
+"Negative social media backlash.",
+"Corporate contracts available.",
+"Delivery commission rates increase.",
+"Students dominate market demand.",
+"Positive national media coverage.",
+"Supply chain disruptions hit industry.",
+"New mall increases competition.",
+"Government increases GST.",
+"Loyal customers expect quality consistency.",
+"Competitor expanding outlets rapidly.",
+"Rent and wages rising.",
+"Influencer boosts coffee demand.",
+"Price comparison apps dominate.",
+"Industry oversupply reduces margins.",
+"Long-term brand trust becomes critical."
+];
+
+const bossSituations = [
+"🌍 Global Giant launches nationwide discount war.",
+"🌍 Massive advertising blitz across all media.",
+"🌍 Subscription model undercuts traditional pricing.",
+"🌍 International investors fund rapid expansion.",
+"🌍 Giant secures exclusive supplier contracts."
+];
+
+function startGame(){
+document.getElementById("intro").classList.add("hidden");
+document.getElementById("game").classList.remove("hidden");
+updateUI();
+}
+
+function updateUI(){
+
+if(!inBossMode){
+document.getElementById("roundTitle").innerText =
+"Round " + round + " / 20";
+document.getElementById("situationText").innerText =
+situations[round-1];
+}
+else{
+document.getElementById("roundTitle").innerText =
+"FINAL BOSS ROUND " + round + " / 5";
+document.getElementById("situationText").innerText =
+bossSituations[round-1];
+}
+
+document.getElementById("cash").innerText = cash.toLocaleString();
+document.getElementById("rep").innerText = reputation;
+document.getElementById("share").innerText = marketShare;
+document.getElementById("investor").innerText = investor;
+document.getElementById("result").innerText = "";
+}
+
+function competitorMove(){
+
+if(!inBossMode){
+return Math.random()<0.5 ? "high":"low";
+}
+else{
+let highCount = playerHistory.filter(x=>x==="high").length;
+let lowCount = playerHistory.filter(x=>x==="low").length;
+
+if(highCount > lowCount) return "low";
+if(lowCount > highCount) return "high";
+
+return Math.random()<0.6 ? "low":"high";
+}
+}
+
+function play(choice){
+
+let compChoice = competitorMove();
+
+let baseRevenue = inBossMode ? 900000 : 600000;
+let operatingCost = inBossMode ? 400000 : 300000;
+let profit = 0;
+
+if(choice==="premium"){
+cash -= 500000;
+reputation += 10;
+investor += 6;
+profit = 0;
+}
+
+else if(choice==="high" && compChoice==="high"){
+profit = baseRevenue*0.7;
+reputation += 3;
+investor += 2;
+}
+
+else if(choice==="low" && compChoice==="low"){
+profit = baseRevenue*0.3;
+reputation -= 3;
+investor -= 2;
+}
+
+else if(choice==="high" && compChoice==="low"){
+profit = baseRevenue*0.2;
+marketShare -= 6;
+investor -= 4;
+}
+
+else{
+profit = baseRevenue*0.9;
+marketShare += 7;
+reputation -= 4;
+}
+
+cash += Math.floor(profit) - operatingCost;
+
+playerHistory.push(choice);
+
+reputation = Math.max(0,Math.min(100,reputation));
+marketShare = Math.max(0,Math.min(100,marketShare));
+investor = Math.max(0,Math.min(100,investor));
+
+document.getElementById("result").innerHTML =
+"Competitor chose: <b>"+compChoice.toUpperCase()+"</b><br>" +
+"Profit: ₹"+Math.floor(profit).toLocaleString();
+
+if(cash<=0) return lose("💀 Bankruptcy – Cash depleted.");
+if(reputation<=0) return lose("📉 Brand Collapse – Reputation destroyed.");
+if(investor<=0) return lose("📉 Investors Pulled Out.");
+if(marketShare<=0) return lose("🚪 Market Exit – No customers left.");
+
+round++;
+
+if(!inBossMode && round>maxRounds){
+inBossMode=true;
+round=1;
+setTimeout(updateUI,2000);
+return;
+}
+
+if(inBossMode && round>bossRounds){
+return finalCheck();
+}
+
+setTimeout(updateUI,1500);
+}
+
+function lose(msg){
+document.getElementById("game").innerHTML=
+"<h2>Game Over</h2><h3>"+msg+"</h3>"+
+"<button onclick='location.reload()'>Restart</button>";
+}
+
+function finalCheck(){
+
+let result;
+
+if(cash>7000000 && reputation>65 && investor>60){
+result="🏆 YOU DEFEATED THE GLOBAL GIANT!";
+}
+else{
+result="❌ You survived but failed to dominate the global entrant.";
+}
+
+document.getElementById("game").innerHTML=
+"<h2>Final Boss Completed</h2>"+
+"<p>Cash: ₹"+cash.toLocaleString()+"</p>"+
+"<p>Reputation: "+reputation+"</p>"+
+"<p>Market Share: "+marketShare+"%</p>"+
+"<p>Investor Confidence: "+investor+"</p>"+
+"<h3>"+result+"</h3>"+
+"<button onclick='location.reload()'>Play Again</button>";
+}
+
+</script>
+
+</body>
+</html>
